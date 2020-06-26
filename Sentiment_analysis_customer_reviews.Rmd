@@ -1,0 +1,100 @@
+---
+title: "Sentiment Analysis on Customer Reviews"
+author: "Aravind Karuturi"
+date: "26/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Businesses, nowadays are becoming more customer centric and customers love being heard. They are more than willing to share their opinions and experience.
+
+Sentiment analysis paves the way to make this happen.If used properly, it can reveal gold mines inside the thoughts and opinions of your customers.
+
+### Sentiment Analysis
+
+Sentiment Analysis is a process of extracting opinions that have different polarities (positive, negative or neutral). We identify the tone in which the customer speak about your product. So by able to track before hand the sentiment across the customers, that company can be well equipped to tackle what might coming their way.
+
+*Here, I would like to perform sentiment analysis on analysing the customer reviews of a product launched by the company **XYZ**, a smart health tracker manufacturer.*
+
+When we have a few reviews, one can go through them directly. **What if we have hundreds of reviews?**
+
+**Sentiment Analysis** allows us to analyze them automatically.
+
+#### Web Scraping
+
+Web Scraping is used to extract information from websites.So here we collected reviews of the product written on the internet.
+
+To do that, I installed **package: rvest** and provided the *url* of the webpage from which the data is collected. I also used **CSS Selector** to select the parts of data that needs to be scraped.
+*Note: CSS Selector extension can be added to the chrome*
+
+install.packages("httr") <br/>
+install.packages("xml2") <br/>
+install.packages("rvest") <br/>
+
+```{r}
+
+library(httr)
+library(xml2)
+library(rvest)
+```
+Provide the css or xpath to parts of data selected through CSS Selector to *html_nodes()* function
+
+```{r, echo=FALSE}
+url1 <- 'https://www.amazon.in/GOQii-Temperature-Tracker-personal-coaching/product-reviews/B087CHCR1N/ref=cm_cr_othr_d_show_all_btm?ie=UTF8&reviewerType=all_reviews'
+url2 <- 'https://www.amazon.in/GOQii-Temperature-Tracker-personal-coaching/product-reviews/B087CHCR1N/ref=cm_cr_arp_d_paging_btm_next_2?ie=UTF8&reviewerType=all_reviews&pageNumber=2'
+```
+url1 <- *'paste the url of the webpage'* <br/>
+*Note: url is masked*
+```{r}
+# Code
+# Assign url of webpage to url1
+webpage1 <- read_html(url1)
+data1 <- html_nodes(webpage1,'.review-text-content span')
+review_data1 <- html_text(data1)
+```
+Similarly scrape data from other webpages. To minimize the complexity, I took only 2 webpages <br/>
+
+url2 <- *'paste the url of the webpage'* <br/>
+*Note: url is masked*
+```{r}
+# Code
+# Assign url of webpage to url2
+webpage2 <- read_html(url2)
+data2 <- html_nodes(webpage2,'.review-text-content span')
+review_data2 <- html_text(data2)
+```
+The reviews are stored as character arrays
+``` {r}
+head(review_data2,2)
+class(review_data2)
+```
+Once the required data is scraped, merge all data to a single character vector
+``` {r}
+# Code
+# Merge the character arrays 
+reviews <- c(review_data1,review_data2)
+```
+#### Data Cleaning 
+As a part of it, remove numbers, punctuations and other non-ASCII characters which are not needed for sentiment analysis
+
+ **Install packages: NLP and tm** <br/>
+install.packages("NLP") <br/>
+install.packages("tm")
+
+```{r, message= FALSE, warning=FALSE}
+# Code
+library(NLP)
+library(tm)
+reviews_clean <- removeNumbers(reviews)
+reviews_clean <- removePunctuation(reviews_clean)
+# to remove all non-ASCII characters
+reviews_clean <-gsub("[^\x01-\x7F]", "",reviews_clean)
+head(reviews_clean,2)
+```
+
+
+
+
