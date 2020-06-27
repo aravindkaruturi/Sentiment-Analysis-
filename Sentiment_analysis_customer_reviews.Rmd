@@ -94,6 +94,25 @@ reviews_clean <- removePunctuation(reviews_clean)
 reviews_clean <-gsub("[^\x01-\x7F]", "",reviews_clean)
 head(reviews_clean,2)
 ```
+#### Text Tidying
+The fundamental requirement of text mining is to get your text in a tidy format.
+To do that first convert the text into dataframe or tibble. Then unnest the text into single words with the help of *unnest_tokens ()* function.
+
+**Install packages: dplyr , tibble and tidytext** <br/>
+install.packages("dplyr") <br/>
+install.packages("tibble") <br>
+install.packages("tidytext") 
+```{r}
+# Code
+library(dplyr) # for data manipulation
+library(tibble) # for simple data frames
+library(tidytext) # for text mining
+
+reviews_tidy <- tibble(linenumber = 1:20,text = reviews_clean)
+reviews_tidy <- reviews_tidy %>% unnest_tokens(word,text)
+head(reviews_tidy,6)
+```
+
 
 
 
