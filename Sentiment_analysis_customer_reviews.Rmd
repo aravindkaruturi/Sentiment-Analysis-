@@ -8,7 +8,12 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+```{css, echo=FALSE}
+#To adjust the font size of text
+p {
+  font-size: 16px;
+}
+```
 Businesses, nowadays are becoming more customer centric and customers love being heard. They are more than willing to share their opinions and experience.
 
 Sentiment analysis paves the way to make this happen.If used properly, it can reveal gold mines inside the thoughts and opinions of your customers.
@@ -17,7 +22,7 @@ Sentiment analysis paves the way to make this happen.If used properly, it can re
 
 Sentiment Analysis is a process of extracting opinions that have different polarities (positive, negative or neutral). We identify the tone in which the customer speak about your product. So by able to track before hand the sentiment across the customers, that company can be well equipped to tackle what might coming their way.
 
-*Here, I would like to perform sentiment analysis on analysing the customer reviews of a product launched by the company **XYZ**, a smart health tracker manufacturer.*
+*Here, I would like to perform sentiment analysis on analyzing the customer reviews of a product launched by the company **XYZ**, a smart health tracker manufacturer.*
 
 When we have a few reviews, one can go through them directly. **What if we have hundreds of reviews?**
 
@@ -27,13 +32,14 @@ When we have a few reviews, one can go through them directly. **What if we have 
 
 Web Scraping is used to extract information from websites.So here we collected reviews of the product written on the internet.
 
-To do that, install **package: rvest** and provide the *url* of the webpage from which the data is collected. Also use **CSS Selector** to select the parts of data that needs to be scraped.
-*Note: CSS Selector extension can be added to the chrome*
+To do that, install **package: rvest** and provide the *URL* of the webpage from which the data is collected. Also use **CSS Selector** to select the parts of data that needs to be scraped. <br>
+*Note: CSS Selector extension can be added to the chrome* <br>
+[click here for link ](https://selectorgadget.com/)
 
 install.packages("httr") <br/>
 install.packages("xml2") <br/>
 install.packages("rvest") <br/>
-
+.huge[
 ```{r,message=FALSE,warning=FALSE}
 # Code
 library(httr)
@@ -78,7 +84,7 @@ Once the required data is scraped, merge all data to a single character vector
 reviews <- c(review_data1,review_data2)
 ```
 ### Data Cleaning 
-As a part of it, remove numbers, punctuations and other non-ASCII characters which are not needed for sentiment analysis
+As a part of it, remove numbers, punctuation and other non-ASCII characters which are not needed for sentiment analysis
 
  **Install packages: NLP and tm** <br/>
 install.packages("NLP") <br/>
@@ -96,7 +102,7 @@ head(reviews_clean,2)
 ```
 ### Text Tidying
 The fundamental requirement of text mining is to get your text in a tidy format.
-To do that first convert the text into dataframe or tibble. Then unnest the text into single words with the help of *unnest_tokens ()* function.
+To do that first convert the text into data frame or tibble. Then unnest the text into single words with the help of *unnest_tokens ()* function.
 
 **Install packages: dplyr , tibble and tidytext** <br/>
 install.packages("dplyr") <br/>
@@ -119,7 +125,7 @@ Perform word frequency analysis to identify the most common words used in the re
 # Code
 reviews_tidy %>% count(word,sort = TRUE)
 ```
-As you see, a lot of common words are not informative (i.e. and,the,to,is,...). These words are called stop words. So, we can remove the stop words from the tibble with the help of *anti_join()* function and *stop_words* dataset from tm package.
+As you see, a lot of common words are not informative (i.e. and,the,to,is,...). These words are called stop words. So, we can remove the stop words from the tibble with the help of *anti_join()* function and *stop_words* data set from tm package.
 ```{r,message=FALSE,warning=FALSE}
 # Code
 common_words <- reviews_tidy %>% anti_join(stop_words) %>% count(word,sort = TRUE)
@@ -136,7 +142,7 @@ library(wordcloud) # to plot a word cloud
 common_words %>% with(wordcloud(word,n,max.words = 100))
 ```
 
-### Indentifying the sentiment of the reviews
+### Identifying the sentiment of the reviews
 Once we convert the data to tidy format, we can use one of the *sentiment lexicons* from the *tidy text package* (i.e. bing,afinn,nrc)
 Get the lexicon using *get_sentiments()* function
 ```{r,warning=FALSE,message=FALSE}
@@ -166,7 +172,7 @@ head(word_count_afinn)
 
 **Install packages: ggplot2** <br>
 install.packages("ggplot2")
-```{r,warning=FALSE,message=FALSE}
+```{r,warning=FALSE,message=FALSE,fig.align='center'}
 # Code
 library(ggplot2) # for data visualisation
 word_count_afinn  %>%  mutate(n = ifelse(value < 0, -n,n))  %>% 
@@ -178,11 +184,13 @@ word_count_afinn  %>%  mutate(n = ifelse(value < 0, -n,n))  %>%
 **Now, identify the sentiment of each review** <br>
 By using *inner_join()* and *summarise()* function, we can calculate the total sentiment of the review.
 ```{r,warning=FALSE,message=FALSE}
+# Code
 review_sentiment_afinn <- reviews_tidy %>% inner_join(afinn) %>% group_by(Review = linenumber) %>% summarise(value = sum(value))
 ```
 **Visualisation of sentiment of the reviews**
 With the help of *mutate()* function and *sentiment value* of each review, identify whether it is a positive or negative review.
-```{r,message=FALSE,warning=FALSE}
+```{r,message=FALSE,warning=FALSE,fig.align='center'}
+# Code
 review_sentiment_afinn %>% mutate(sentiment = ifelse(value <0,"negative","positive")) %>% ggplot(aes(Review,value,fill=sentiment)) + geom_col() + labs(title = "Sentiment of Reviews")
 ```
 
@@ -190,10 +198,10 @@ review_sentiment_afinn %>% mutate(sentiment = ifelse(value <0,"negative","positi
 - **From the plot, we observe that the customer reviews received for the product of XYZ are mostly positive (> 80%). This indicates that the most of the customers are satisfied with the product.**
 
 
-All represent positve and negative words as word cloud:
+All represent positive and negative words as word cloud: <br>
 **Install packages: RcolorBrewer, wordcloud and reshape2** <br>
 install.packages("reshape2")
-```{r,warning=FALSE,message=FALSE}
+```{r,warning=FALSE,message=FALSE,fig.align='center'}
 # Code
 library(reshape2)
 reviews_tidy %>% inner_join(afinn) %>% count(word,value,sort = TRUE) %>% 
@@ -202,7 +210,7 @@ reviews_tidy %>% inner_join(afinn) %>% count(word,value,sort = TRUE) %>%
          comparison.cloud(colors = c("red","green"),max.words = 100)
 ```
 
-- **Negative words gives us an understanding of things that the company should carefully anaylse to improve the porduct.**
+- **Negative words gives us an understanding of things that the company should carefully analyse to improve the product.**
 
 - **By increasing the number of reviews considered for the sentiment analysis, we can increase the accuracy of the model.** 
 
