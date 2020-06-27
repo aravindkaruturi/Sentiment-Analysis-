@@ -1,7 +1,7 @@
 ---
 title: "Sentiment Analysis on Customer Reviews"
 author: "Aravind Karuturi"
-date: "26/06/2020"
+date: "27/06/2020"
 output: html_document
 ---
 
@@ -13,7 +13,7 @@ Businesses, nowadays are becoming more customer centric and customers love being
 
 Sentiment analysis paves the way to make this happen.If used properly, it can reveal gold mines inside the thoughts and opinions of your customers.
 
-### Sentiment Analysis
+## Sentiment Analysis
 
 Sentiment Analysis is a process of extracting opinions that have different polarities (positive, negative or neutral). We identify the tone in which the customer speak about your product. So by able to track before hand the sentiment across the customers, that company can be well equipped to tackle what might coming their way.
 
@@ -23,19 +23,19 @@ When we have a few reviews, one can go through them directly. **What if we have 
 
 **Sentiment Analysis** allows us to analyze them automatically.
 
-#### Web Scraping
+### Web Scraping
 
 Web Scraping is used to extract information from websites.So here we collected reviews of the product written on the internet.
 
-To do that, I installed **package: rvest** and provided the *url* of the webpage from which the data is collected. I also used **CSS Selector** to select the parts of data that needs to be scraped.
+To do that, install **package: rvest** and provide the *url* of the webpage from which the data is collected. Also use **CSS Selector** to select the parts of data that needs to be scraped.
 *Note: CSS Selector extension can be added to the chrome*
 
 install.packages("httr") <br/>
 install.packages("xml2") <br/>
 install.packages("rvest") <br/>
 
-```{r}
-
+```{r,message=FALSE,warning=FALSE}
+# Code
 library(httr)
 library(xml2)
 library(rvest)
@@ -48,7 +48,7 @@ url2 <- 'https://www.amazon.in/GOQii-Temperature-Tracker-personal-coaching/produ
 ```
 url1 <- *'paste the url of the webpage'* <br/>
 *Note: url is masked*
-```{r}
+```{r,warning=FALSE,message=FALSE}
 # Code
 # Assign url of webpage to url1
 webpage1 <- read_html(url1)
@@ -59,7 +59,7 @@ Similarly scrape data from other webpages. To minimize the complexity, I took on
 
 url2 <- *'paste the url of the webpage'* <br/>
 *Note: url is masked*
-```{r}
+```{r,warning=FALSE,message=FALSE}
 # Code
 # Assign url of webpage to url2
 webpage2 <- read_html(url2)
@@ -67,17 +67,17 @@ data2 <- html_nodes(webpage2,'.review-text-content span')
 review_data2 <- html_text(data2)
 ```
 The reviews are stored as character arrays
-``` {r}
+``` {r,warning=FALSE,message=FALSE}
 head(review_data2,2)
 class(review_data2)
 ```
 Once the required data is scraped, merge all data to a single character vector
-``` {r}
+``` {r, message=FALSE,warning=FALSE}
 # Code
 # Merge the character arrays 
 reviews <- c(review_data1,review_data2)
 ```
-#### Data Cleaning 
+### Data Cleaning 
 As a part of it, remove numbers, punctuations and other non-ASCII characters which are not needed for sentiment analysis
 
  **Install packages: NLP and tm** <br/>
@@ -94,7 +94,7 @@ reviews_clean <- removePunctuation(reviews_clean)
 reviews_clean <-gsub("[^\x01-\x7F]", "",reviews_clean)
 head(reviews_clean,2)
 ```
-#### Text Tidying
+### Text Tidying
 The fundamental requirement of text mining is to get your text in a tidy format.
 To do that first convert the text into dataframe or tibble. Then unnest the text into single words with the help of *unnest_tokens ()* function.
 
@@ -102,7 +102,7 @@ To do that first convert the text into dataframe or tibble. Then unnest the text
 install.packages("dplyr") <br/>
 install.packages("tibble") <br>
 install.packages("tidytext") 
-```{r}
+```{r, message=FALSE,warning=FALSE}
 # Code
 library(dplyr) # for data manipulation
 library(tibble) # for simple data frames
@@ -113,6 +113,98 @@ reviews_tidy <- reviews_tidy %>% unnest_tokens(word,text)
 head(reviews_tidy,6)
 ```
 
+### Word frequency
+Perform word frequency analysis to identify the most common words used in the reviews. For that use *count()* function to assess the words which are of high sensitivity
+```{r}
+# Code
+reviews_tidy %>% count(word,sort = TRUE)
+```
+As you see, a lot of common words are not informative (i.e. and,the,to,is,...). These words are called stop words. So, we can remove the stop words from the tibble with the help of *anti_join()* function and *stop_words* dataset from tm package.
+```{r,message=FALSE,warning=FALSE}
+# Code
+common_words <- reviews_tidy %>% anti_join(stop_words) %>% count(word,sort = TRUE)
+head(common_words)
+```
+To represent them in the form of word cloud,  
+**Install packages: RcolorBrewer and wordcloud** <br> 
+install.packages("RcolorBrewer") <br>
+install.packages("wordcloud")  
+```{r,warning=FALSE,message=FALSE}
+# Code
+library(RColorBrewer)
+library(wordcloud) # to plot a word cloud
+common_words %>% with(wordcloud(word,n,max.words = 100))
+```
+
+### Indentifying the sentiment of the reviews
+Once we convert the data to tidy format, we can use one of the *sentiment lexicons* from the *tidy text package* (i.e. bing,afinn,nrc)
+Get the lexicon using *get_sentiments()* function
+```{r,warning=FALSE,message=FALSE}
+# Code
+library(tidytext)
+bing <- get_sentiments("bing")
+afinn <- get_sentiments("afinn")
+nrc <- get_sentiments("nrc")
+```
+Choose the sentiment lexicon according to your requirement
+```{r,message=FALSE,warning=FALSE}
+# Code
+head(bing,3)
+head(afinn,3)
+head(nrc,3)
+```
+In general people tend use negation in reviews (e.g. 'not good' in place to 'bad'). So to consider affect of negation while finding sentiments of the review, we opt **afinn** lexicon as it contain words like not good, not working etc.
+
+**First, we will identify the sentiment score of words used in the reviews** <br>
+This can be done by using *inner_join()* function and *count()* function.
+```{r,warning=FALSE,message=FALSE}
+# Code
+word_count_afinn <- reviews_tidy %>% inner_join(afinn) %>% count(word,value,sort = TRUE)
+head(word_count_afinn)
+```
+**Visualisation of sentiment score**
+
+**Install packages: ggplot2** <br>
+install.packages("ggplot2")
+```{r,warning=FALSE,message=FALSE}
+# Code
+library(ggplot2) # for data visualisation
+word_count_afinn  %>%  mutate(n = ifelse(value < 0, -n,n))  %>% 
+        mutate(sentiment = ifelse(value <0,"negative","positive"))  %>% 
+        mutate(word = reorder(word,n))  %>%  
+        ggplot(mapping = aes(word,n,fill=sentiment)) + geom_col() + coord_flip() + labs(y = "sentiment score")
+```
+
+**Now, identify the sentiment of each review** <br>
+By using *inner_join()* and *summarise()* function, we can calculate the total sentiment of the review.
+```{r,warning=FALSE,message=FALSE}
+review_sentiment_afinn <- reviews_tidy %>% inner_join(afinn) %>% group_by(Review = linenumber) %>% summarise(value = sum(value))
+```
+**Visualisation of sentiment of the reviews**
+With the help of *mutate()* function and *sentiment value* of each review, identify whether it is a positive or negative review.
+```{r,message=FALSE,warning=FALSE}
+review_sentiment_afinn %>% mutate(sentiment = ifelse(value <0,"negative","positive")) %>% ggplot(aes(Review,value,fill=sentiment)) + geom_col() + labs(title = "Sentiment of Reviews")
+```
+
+## Inference <br>
+- **From the plot, we observe that the customer reviews received for the product of XYZ are mostly positive (> 80%). This indicates that the most of the customers are satisfied with the product.**
+
+
+All represent positve and negative words as word cloud:
+**Install packages: RcolorBrewer, wordcloud and reshape2** <br>
+install.packages("reshape2")
+```{r,warning=FALSE,message=FALSE}
+# Code
+library(reshape2)
+reviews_tidy %>% inner_join(afinn) %>% count(word,value,sort = TRUE) %>% 
+         mutate(sentiment = ifelse(value <0,"negative","positive")) %>%
+         acast(word~sentiment,value.var = "n",fill = 0) %>%
+         comparison.cloud(colors = c("red","green"),max.words = 100)
+```
+
+- **Negative words gives us an understanding of things that the company should carefully anaylse to improve the porduct.**
+
+- **By increasing the number of reviews considered for the sentiment analysis, we can increase the accuracy of the model.** 
 
 
 
