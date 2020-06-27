@@ -93,7 +93,7 @@ review_sentiment_afinn <- reviews_tidy %>% inner_join(afinn) %>% group_by(Review
 # visualisation of sentiment of reviews
 review_sentiment_afinn %>% mutate(sentiment = ifelse(value <0,"negative","positive")) %>% ggplot(aes(Review,value,fill=sentiment)) + geom_col() + labs(title = "Sentiment of Reviews")
 
- view(stop_words)
+ 
 
 
 # most recurring words in the reviews
